@@ -1,0 +1,57 @@
+name: Build Windows exe
+
+on:
+  workflow_dispatch:        # bouton "Run workflow" sur le site GitHub
+  push:
+    tags: ["v*"]            # ou : créer une "Release" avec un tag v0.1.0, v0.2.0...
+
+permissions:
+  contents: write           # nécessaire pour publier la Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Télécharger les modèles du mot d'activation (inclus dans le .exe)
+        run: python -c "import openwakeword; openwakeword.utils.download_models()"
+
+      - name: Construire Jarvis.exe
+        run: >
+          pyinstaller main.py --name Jarvis --noconfirm --clean --onedir --console
+          --collect-all faster_whisper --collect-all ctranslate2
+          --collect-all openwakeword --collect-all onnxruntime
+          --collect-all edge_tts --collect-submodules pyttsx3
+          --collect-all sounddevice --collect-all soundfile
+          --collect-binaries nvidia.cublas --collect-binaries nvidia.cudnn
+          --hidden-import comtypes --hidden-import win32com
+
+      - name: Ajouter la configuration à côté de l'exécutable
+        shell: pwsh
+        run: |
+          Copy-Item config.yaml dist/Jarvis/
+          Copy-Item README.md dist/Jarvis/
+          New-Item -ItemType Directory -Force dist/Jarvis/data | Out-Null
+          Compress-Archive -Path dist/Jarvis -DestinationPath Jarvis-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-windows
+          path: Jarvis-windows.zip
+
+      - name: Publier dans les Releases (si lancé par un tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Jarvis-windows.zip
