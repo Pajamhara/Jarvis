@@ -1,0 +1,16 @@
+# --- Cerveau (LLM) ---
+anthropic>=0.40.0
+
+# --- Audio / voix ---
+sounddevice>=0.4.7
+soundfile>=0.12.1
+numpy>=1.26
+faster-whisper>=1.0.3     # reconnaissance vocale (local)
+openwakeword>=0.6.0       # mot d'activation "Hey Jarvis" (local)
+edge-tts>=6.1.9           # synthèse vocale neuronale (nécessite internet)
+pyttsx3>=2.90             # synthèse vocale de secours (voix Windows, hors ligne)
+
+# --- Divers ---
+requests>=2.31
+PyYAML>=6.0
+python-dotenv>=1.0

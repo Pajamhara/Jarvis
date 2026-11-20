@@ -1,0 +1,12 @@
+# Dépendances OPTIONNELLES pour la reconnaissance de VOTRE voix (vérification du locuteur).
+# Installation (voir README) :
+#   pip install -r requirements-speaker.txt
+#   pip install resemblyzer --no-deps
+#
+# webrtcvad-wheels fournit le module "webrtcvad" déjà compilé (évite d'installer
+# les Build Tools C++ de Visual Studio sous Windows).
+webrtcvad-wheels
+torch
+librosa
+scipy
+numpy
