@@ -3,7 +3,7 @@ name: Build Windows exe
 on:
   workflow_dispatch:        # bouton "Run workflow" sur le site GitHub
   push:
-    tags: ["v*"]            # ou : créer une "Release" avec un tag v0.1.0, v0.2.0...
+    tags: ["v*"]            # ou : créer une "Release" avec un tag v0.2.0, v0.3.0...
 
 permissions:
   contents: write           # nécessaire pour publier la Release
@@ -24,18 +24,38 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      # Fonctions optionnelles : un échec ici n'empêche pas de construire l'exe.
+      - name: Voix locale Piper (optionnel)
+        continue-on-error: true
+        run: pip install "piper-tts>=1.3.0"
+
+      - name: Recherche internet ddgs (optionnel)
+        continue-on-error: true
+        run: pip install "ddgs>=9.0"
+
       - name: Télécharger les modèles du mot d'activation (inclus dans le .exe)
         run: python -c "import openwakeword; openwakeword.utils.download_models()"
 
       - name: Construire Jarvis.exe
-        run: >
-          pyinstaller main.py --name Jarvis --noconfirm --clean --onedir --console
-          --collect-all faster_whisper --collect-all ctranslate2
-          --collect-all openwakeword --collect-all onnxruntime
-          --collect-all edge_tts --collect-submodules pyttsx3
-          --collect-all sounddevice --collect-all soundfile
-          --collect-binaries nvidia.cublas --collect-binaries nvidia.cudnn
-          --hidden-import comtypes --hidden-import win32com
+        shell: pwsh
+        run: |
+          $pyArgs = @(
+            "main.py", "--name", "Jarvis", "--noconfirm", "--clean", "--onedir", "--console",
+            "--collect-all", "faster_whisper", "--collect-all", "ctranslate2",
+            "--collect-all", "openwakeword", "--collect-all", "onnxruntime",
+            "--collect-all", "edge_tts", "--collect-submodules", "pyttsx3",
+            "--collect-all", "sounddevice", "--collect-all", "soundfile",
+            "--collect-binaries", "nvidia.cublas", "--collect-binaries", "nvidia.cudnn",
+            "--hidden-import", "comtypes", "--hidden-import", "win32com",
+            "--hidden-import", "tkinter"
+          )
+          # N'ajoute les paquets optionnels que s'ils se sont bien installés.
+          foreach ($m in @("piper", "ddgs", "primp")) {
+            python -c "import $m" 2>$null
+            if ($LASTEXITCODE -eq 0) { $pyArgs += @("--collect-all", $m); Write-Host "Inclus : $m" }
+            else { Write-Host "Absent (ignoré) : $m" }
+          }
+          pyinstaller @pyArgs
 
       - name: Ajouter la configuration à côté de l'exécutable
         shell: pwsh
