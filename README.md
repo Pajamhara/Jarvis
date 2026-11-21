@@ -6,6 +6,9 @@ Assistant vocal en français inspiré de J.A.R.V.I.S. (Iron Man). Dites **« Hey
 - « Quel temps fera-t-il demain à Paris ? »
 - « Mets un minuteur de dix minutes », « Monte le son », « Chanson suivante »
 - « Éteins l'ordinateur » *(confirmation vocale demandée)*
+- « Prends en note que j'ai rendez-vous jeudi », « Lis mes notes », « Retiens que mon chat s'appelle Mochi »
+- « Rappelle-moi à 18h30 d'appeler maman », « Rappelle-moi dans 20 minutes de sortir le gratin »
+- « Qui a gagné le match hier ? » : le modèle cherche sur internet et résume
 - Et n'importe quelle question : le modèle local répond à voix haute.
 
 **Aucune clé API, aucun abonnement.** Le cerveau est un modèle qui tourne sur votre carte graphique via [Ollama](https://ollama.com).
@@ -20,7 +23,7 @@ Micro → Mot d'activation (openWakeWord)
       → Chemin rapide par règles ──► actions (apps, web, météo, volume, minuteur…)
             │ (non reconnu)
             └► Modèle local Ollama + outils ──► actions
-      → Texte → voix (edge-tts, repli pyttsx3)
+      → Texte → voix (Piper local, repli edge-tts puis pyttsx3), 1re phrase lue dès qu'elle est prête
 ```
 
 Le **chemin rapide** traite instantanément (et sans erreur possible du modèle) les commandes courantes. Seul le reste passe par le modèle, plus lent et moins fiable qu'un grand modèle en ligne.
@@ -28,8 +31,8 @@ Le **chemin rapide** traite instantanément (et sans erreur possible du modèle)
 | Brique | Où ça tourne |
 |---|---|
 | Mot d'activation, reconnaissance vocale, modèle, empreinte vocale | **Votre PC** |
-| Voix de Jarvis (`edge`) | Service Microsoft gratuit, internet requis. Passez `tts.engine: pyttsx3` pour tout garder hors ligne (voix plus robotique) |
-| Météo | API Open-Meteo (gratuite, sans clé) |
+| Voix de Jarvis (`piper`) | **Votre PC** (la voix est téléchargée une fois dans `data/voices`). Repli automatique sur `edge` (en ligne) puis `pyttsx3` |
+| Météo, recherche internet | API Open-Meteo ; DuckDuckGo (via `ddgs`) : seules les requêtes de recherche sortent du PC |
 
 ## Installation (Windows)
 
@@ -49,6 +52,7 @@ cd jarvis-local
 python -m venv .venv
 .venv\Scripts\activate              # Git Bash : source .venv/Scripts/activate
 pip install -r requirements.txt
+pip install -r requirements-extra.txt   # voix locale Piper + recherche internet (optionnel)
 ```
 
 **3. Lancer**
@@ -60,6 +64,28 @@ python main.py                  # mode vocal : dites « Hey Jarvis »
 Au premier lancement vocal, les modèles Whisper et openWakeWord se téléchargent. Dites « **au revoir Jarvis** » pour l'arrêter.
 
 Autres options : `--list-devices` (choisir son micro), `-v` (logs détaillés), `--enroll` (empreinte vocale).
+
+## L'orbe
+
+Une petite orbe animée s'affiche en bas à droite de l'écran : **bleue** = en veille, **cyan** = écoute, **orange** = réfléchit, **verte** = parle, **rouge** = erreur.
+Clic = **couper la parole** de Jarvis · glisser = déplacer · clic droit = menu (Quitter). Désactivable avec `ui.orb: false`.
+
+## Mesurer la vitesse
+
+Après chaque phrase, la console affiche par exemple :
+`⏱ 1.4 s entre la fin de votre phrase et la voix (transcription 0.4 s · cerveau 0.8 s · synthèse 0.2 s)`.
+Cela montre quelle étape ralentit. Tout est aussi enregistré dans `data/jarvis.log` (à joindre en cas de problème).
+
+## Notes, mémoire, rappels
+
+- **Notes** : « prends en note… » ajoute une ligne horodatée dans `data/notes.txt` ; « lis mes notes » relit les dernières.
+- **Mémoire** : « retiens que… » range un fait dans `data/memory.json` ; Jarvis s'en sert dans ses réponses, même après un redémarrage. « Oublie tout ce que tu sais » l'efface (avec confirmation).
+- **Rappels** : programmés en mémoire vive, donc **perdus si Jarvis redémarre**.
+- Ces fichiers sont personnels : le dossier `data/` n'est jamais publié sur GitHub (`.gitignore`).
+
+## Recherche sur internet
+
+Pour une question d'actualité ou de fait récent, le modèle appelle l'outil `lookup_online` (DuckDuckGo) puis résume les extraits. C'est le seul cas où le contenu de votre question quitte le PC. Les extraits sont traités comme des données, jamais comme des ordres. La recherche peut échouer ponctuellement (limitation de débit) : Jarvis le dit.
 
 ## Votre RTX 5070
 
@@ -112,9 +138,10 @@ jarvis-local/
 ├── main.py, config.yaml
 ├── jarvis/
 │   ├── app.py          boucle principale
-│   ├── core/           audio, wake_word, stt (GPU), cuda_setup, tts, speaker_id
+│   ├── core/           audio, wake_word, stt (GPU), cuda_setup, tts (Piper), speaker_id
+│   ├── ui/             orb.py (orbe animée)
 │   ├── brain/          llm.py (Ollama), router.py (chemin rapide), tools.py
-│   └── skills/         apps, web, weather, system, timer
+│   └── skills/         apps, web, websearch, weather, system, timer, memory
 └── tests/              pytest (sans micro, sans réseau, sans Ollama)
 ```
 

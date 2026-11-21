@@ -16,7 +16,7 @@ audio:
   input_device: null         # null = micro par défaut (voir `python main.py --list-devices`)
   start_timeout: 6.0         # secondes d'attente de votre voix après le mot d'activation
   follow_up_seconds: 6.0     # fenêtre pour enchaîner une 2e demande sans redire "Jarvis"
-  silence_duration: 0.7      # silence (s) qui marque la fin de votre phrase
+  silence_duration: 0.8      # silence (s) qui marque la fin de votre phrase (plus court = plus réactif)
   max_duration: 20.0         # durée max d'une demande
   min_rms: 350               # niveau minimal pour considérer qu'on parle (monter si bruyant)
 
@@ -26,10 +26,16 @@ stt:                         # Reconnaissance vocale (faster-whisper, locale, su
   compute_type: "float16"    # float16 pour les cartes RTX (RTX 50xx : éviter les variantes int8)
   language: "fr"
 
-tts:                         # Synthèse vocale
-  engine: "edge"             # edge (voix neuronale, internet) | pyttsx3 (hors ligne, voix Windows)
-  voice: "fr-FR-HenriNeural" # autres : fr-FR-DeniseNeural, fr-FR-RemyMultilingualNeural...
-  rate: "+0%"                # vitesse, ex : "+10%" ou "-10%"
+tts:                         # Voix de Jarvis
+  engine: "piper"            # piper (local, quasi instantané) -> bascule seul sur edge puis pyttsx3 si besoin
+  piper_voice: "fr_FR-tom-medium"   # voix masculine ; autres : fr_FR-upmc-medium, fr_FR-siwis-medium (féminine)
+                             # (téléchargée automatiquement au 1er lancement dans data/voices)
+  voice: "fr-FR-HenriNeural" # voix utilisée si engine = "edge" (en ligne)
+  rate: "+0%"                # vitesse de la voix edge
+
+ui:
+  orb: true                  # orbe animée (clic = couper la parole, clic droit = menu, glisser = déplacer)
+  size: 110
 
 speaker_verification:        # N'obéir qu'à VOTRE voix (optionnel, voir README)
   enabled: false
@@ -48,6 +54,7 @@ llm:                         # Cerveau local via Ollama (gratuit, aucune clé AP
   timeout: 90
   history_turns: 6
   fast_path: true            # commandes simples traitées par règles, sans IA (instantané)
+  stream: true               # lit la 1re phrase de la réponse avant la fin de la génération
 
 # Phrases (sans accents, minuscules) qui arrêtent Jarvis
 quit_phrases:
@@ -101,3 +108,27 @@ sites:
   prime video: "https://www.primevideo.com"
   disney plus: "https://www.disneyplus.com"
   deezer: "https://www.deezer.com"
+
+# ------------------------------------------------------------
+#  Surnoms : ce que vous dites -> nom dans `apps` ou `sites`
+# ------------------------------------------------------------
+aliases:
+  internet: "navigateur"
+  web: "navigateur"
+  microsoft edge: "navigateur"
+  google chrome: "chrome"
+  calculette: "calculatrice"
+  explorateur de fichiers: "explorateur"
+  fichiers: "explorateur"
+  bloc note: "bloc-notes"
+  notepad: "bloc-notes"
+  gestionnaire de taches: "gestionnaire des tâches"
+  visual studio code: "vscode"
+  code: "vscode"
+  invite de commande: "terminal"
+  console: "terminal"
+  powershell: "terminal"
+  musique: "spotify"
+  yt: "youtube"
+  mail: "gmail"
+  mails: "gmail"

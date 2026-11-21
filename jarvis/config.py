@@ -31,7 +31,13 @@ DEFAULTS: dict[str, Any] = {
         "compute_type": "float16",
         "language": "fr",
     },
-    "tts": {"engine": "edge", "voice": "fr-FR-HenriNeural", "rate": "+0%"},
+    "tts": {
+        "engine": "piper",            # piper (local, rapide) -> edge -> pyttsx3 (repli automatique)
+        "piper_voice": "fr_FR-tom-medium",
+        "voice": "fr-FR-HenriNeural",  # voix edge-tts
+        "rate": "+0%",
+    },
+    "ui": {"orb": True, "size": 110},
     "speaker_verification": {
         "enabled": False,
         "threshold": 0.75,
@@ -48,10 +54,12 @@ DEFAULTS: dict[str, Any] = {
         "timeout": 90,
         "history_turns": 6,
         "fast_path": True,
+        "stream": True,
     },
     "quit_phrases": ["au revoir jarvis", "eteins toi", "arrete toi", "quitte jarvis"],
     "apps": {},
     "sites": {},
+    "aliases": {},
 }
 
 

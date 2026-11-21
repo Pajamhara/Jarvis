@@ -63,7 +63,7 @@ def register(registry: ToolRegistry, config: dict) -> None:
     registry.register(
         Tool(
             name="search_web",
-            description="Lance une recherche dans le navigateur (Google, YouTube, Wikipédia, Maps...).",
+            description="OUVRE la page de résultats dans le navigateur (Google, YouTube, Wikipédia, Maps...) quand l'utilisateur veut VOIR la page.",
             input_schema={
                 "type": "object",
                 "properties": {

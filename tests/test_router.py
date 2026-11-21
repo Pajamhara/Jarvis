@@ -131,3 +131,40 @@ def test_unknown_goes_to_model(router):
     r, _ = router
     for phrase in ["raconte-moi une blague", "qui a gagné la coupe du monde 2018", "bonjour"]:
         assert r.route(phrase) is None
+
+
+def test_polite_prefix_and_aliases(router):
+    r, reg = router
+    assert r.route("peux-tu lancer la calculette") == "Je lance calculatrice."
+    assert r.route("ouvre mon navigateur") == "Je lance navigateur."
+    assert r.route("je voudrais ouvrir les paramètres bluetooth") == "J'ouvre les paramètres Bluetooth."
+    assert last(reg) == ("open_settings", {"page": "bluetooth"})
+    r.route("ouvre internet")
+    assert last(reg) == ("open_app", {"name": "navigateur"})
+    r.route("lance yt")
+    assert last(reg) == ("open_url", {"url": "https://www.youtube.com"})
+
+
+def test_notes_and_memory(router):
+    r, reg = router
+    r.route("prends en note que j'ai rendez-vous chez le dentiste jeudi")
+    assert last(reg) == ("add_note", {"text": "j'ai rendez-vous chez le dentiste jeudi"})
+    r.route("ajoute une note acheter du lait")
+    assert last(reg) == ("add_note", {"text": "acheter du lait"})
+    r.route("lis mes notes")
+    assert last(reg)[0] == "read_notes"
+    r.route("retiens que mon chat s'appelle Mochi")
+    assert last(reg) == ("remember", {"fact": "mon chat s'appelle mochi"})
+    r.route("oublie tout ce que tu sais")
+    assert last(reg)[0] == "forget_memory"
+
+
+def test_reminders(router):
+    r, reg = router
+    r.route("rappelle-moi à 18h30 d'appeler maman")
+    assert last(reg) == ("set_reminder", {"at_time": "18:30", "label": "appeler maman"})
+    r.route("rappelle moi à huit heures de prendre mon médicament")
+    assert last(reg)[1]["at_time"] == "08:00" and "medicament" in last(reg)[1]["label"].replace("é", "e")
+    r.route("rappelle-moi dans 20 minutes de sortir le gratin")
+    assert last(reg) == ("set_reminder", {"in_minutes": 20.0, "label": "sortir le gratin"})
+    assert r.route("rappelle-moi de ...") is None  # pas d'heure : le modèle demandera

@@ -18,6 +18,11 @@ log = logging.getLogger(__name__)
 
 POLITE = re.compile(r"\b(s.il (?:te|vous) pla[iî]t|svp|stp|jarvis|merci)\b", re.I)
 
+# « tu peux », « pourrais-tu », « je voudrais »... au début de la phrase
+PREFIX = re.compile(
+    r"^(?:(?:est[- ]ce que\s+)?(?:tu peux|peux[- ]tu|pourrais[- ]tu|tu pourrais|je voudrais|"
+    r"j.aimerais|je veux|je souhaite)\s+(?:me\s+|m['’ ])?)+", re.I)
+
 SETTINGS_RULES = [  # (motif sur le texte normalisé, page, libellé parlé)
     (r"applications par defaut", "applications_par_defaut", "des applications par défaut"),
     (r"wi ?fi|wifi", "wifi", "Wi-Fi"),
@@ -55,15 +60,17 @@ class FastRouter:
         self.default_city = config["assistant"]["default_city"]
         self.apps = {normalize(k): k for k in config.get("apps", {})}
         self.sites = {normalize(k): (k, v) for k, v in config.get("sites", {}).items()}
+        self.aliases = {normalize(k): normalize(v) for k, v in config.get("aliases", {}).items()}
         self.rules = [
-            self._time, self._weather, self._timer, self._volume, self._media,
-            self._power, self._settings, self._search, self._open,
+            self._time, self._weather, self._reminder, self._timer, self._volume, self._media,
+            self._power, self._settings, self._notes, self._memory, self._search, self._open,
         ]
 
     def route(self, text: str) -> str | None:
         """Retourne la réponse parlée si la demande est reconnue, sinon None."""
         orig = POLITE.sub(" ", text.lower())
         orig = re.sub(r"\s+", " ", re.sub(r"[?!.,;]", " ", orig)).strip()
+        orig = PREFIX.sub("", orig).strip()
         t = normalize(orig)
         if not t:
             return None
@@ -83,13 +90,15 @@ class FastRouter:
         words = set(t.split())
         if len(words) > 7 or words & {"a", "au", "en", "dans", "pour", "tokyo", "new"}:
             return None
+        ask_hour = re.search(r"\bquelle heure\b|\bheure est il\b", t)
+        ask_date = re.search(r"\bquel jour\b|\bquelle date\b|\bquelle est la date\b|\bla date\b", t)
+        if not (ask_hour or ask_date):
+            return None
         now = self._run("get_datetime")  # "vendredi 20 novembre 2026, 14:05"
         day, _, hour = now.partition(", ")
-        if re.search(r"\bquelle heure\b|\bheure est il\b", t):
+        if ask_hour:
             return f"Il est {hour.replace(':', ' h ')}."
-        if re.search(r"\bquel jour\b|\bquelle date\b|\bquelle est la date\b|\bla date\b", t):
-            return f"Nous sommes le {day}."
-        return None
+        return f"Nous sommes le {day}."
 
     # ------------------------------------------------------------------ météo
     def _weather(self, t: str, orig: str) -> str | None:
@@ -126,14 +135,11 @@ class FastRouter:
             reply += f" Il fait actuellement {round(d['actuellement']['temperature_c'])} degrés."
         return reply
 
-    # ----------------------------------------------------------------- minuteur
-    def _timer(self, t: str, orig: str) -> str | None:
-        if not re.search(r"\bminuteur\b|\btimer\b|\bcompte a rebours\b", t):
-            return None
-        if re.search(r"\b(annule|arrete|supprime|stoppe|desactive)\b", t):
-            return self._run("cancel_timers")
-
-        total, matched_hours = 0, False
+    # ----------------------------------------------------------------- durées
+    @staticmethod
+    def _parse_duration(t: str) -> tuple[int, bool]:
+        """« 2 minutes 30 secondes », « vingt cinq minutes »... -> (secondes, a_des_heures)."""
+        total, has_hours = 0, False
         for m in re.finditer(r"((?:\w+\s+){0,2}\w+)\s+(heures?|minutes?|mins?|secondes?|secs?)\b", t):
             tokens = m.group(1).split()
             n = None
@@ -146,11 +152,63 @@ class FastRouter:
             unit = m.group(2)
             if unit.startswith("heure"):
                 total += n * 3600
-                matched_hours = True
+                has_hours = True
             elif unit.startswith("min"):
                 total += n * 60
             else:
                 total += n
+        return total, has_hours
+
+    # ---------------------------------------------------------------- rappels
+    def _reminder(self, t: str, orig: str) -> str | None:
+        m = re.match(r"^(?:rappelle moi|rappelle nous|fais moi penser)\s+(.*)$", t)
+        if not m:
+            return None
+        rest = m.group(1)
+        args: dict = {}
+        clock = re.search(r"\ba\s+(\d{1,2})\s*(?:h|heures?)\s*(\d{2})?\b", rest) or \
+            re.search(r"\ba\s+(\w+)\s+heures?(?:\s+(\d{2}))?\b", rest)
+        if clock and (hour := words_to_number([clock.group(1)])) is not None and hour < 24:
+            args["at_time"] = f"{hour:02d}:{int(clock.group(2) or 0):02d}"
+            rest = rest.replace(clock.group(0), " ")
+        elif re.search(r"\bdans\b", rest):
+            seconds, _ = self._parse_duration(rest)
+            if seconds <= 0:
+                return None
+            args["in_minutes"] = round(seconds / 60, 2)
+            rest = re.sub(r"\bdans\s+(?:\w+\s+){0,2}?\w+\s+(?:heures?|minutes?|mins?|secondes?|secs?)\b", " ", rest)
+        else:
+            return None
+        label = re.sub(r"^(?:de|d|que|qu|pour)\s+", "", re.sub(r"\s+", " ", rest).strip())
+        label = re.sub(r"^(?:de|d)\s+", "", label)
+        args["label"] = label
+        return self._run("set_reminder", args)
+
+    # ------------------------------------------------------------ notes & mémoire
+    def _notes(self, t: str, orig: str) -> str | None:
+        if (m := re.match(r"^(?:prends?|prend) (?:en )?note(?: que| de| d')?\s*(.+)$", orig)) or \
+           (m := re.match(r"^ajoute (?:une )?note(?: que| de| d')?\s*(.+)$", orig)) or \
+           (m := re.match(r"^note(?: moi)?(?: que)\s+(.+)$", orig)):
+            return self._run("add_note", {"text": m.group(1)})
+        if re.search(r"\b(lis|relis|donne|montre|dis)\b.*\bnotes?\b|^mes notes$|\bquelles sont mes notes\b", t):
+            return self._run("read_notes")
+        return None
+
+    def _memory(self, t: str, orig: str) -> str | None:
+        if (m := re.match(r"^(?:retiens|memorise|mémorise|souviens toi|n oublie pas)(?: bien)?(?: que| de| d')?\s*(.+)$", orig)):
+            return self._run("remember", {"fact": m.group(1)})
+        if re.search(r"\b(oublie|efface)\b.*\b(tout|memoire|ce que tu sais)\b", t):
+            return self._run("forget_memory")
+        return None
+
+    # ----------------------------------------------------------------- minuteur
+    def _timer(self, t: str, orig: str) -> str | None:
+        if not re.search(r"\bminuteur\b|\btimer\b|\bcompte a rebours\b", t):
+            return None
+        if re.search(r"\b(annule|arrete|supprime|stoppe|desactive)\b", t):
+            return self._run("cancel_timers")
+
+        total, matched_hours = self._parse_duration(t)
         if re.search(r"\bet demie?\b", t):
             total += 1800 if matched_hours else 30
         elif re.search(r"\bet quart\b", t):
@@ -247,6 +305,7 @@ class FastRouter:
         name = " ".join(tokens)
         if not name:
             return None
+        name = self.aliases.get(name, name)
 
         key = name if name in self.apps else None
         if key is None:

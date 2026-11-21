@@ -4,8 +4,8 @@ soundfile>=0.12.1
 numpy>=1.26
 faster-whisper>=1.1.0     # reconnaissance vocale (locale, GPU NVIDIA)
 openwakeword>=0.6.0       # mot d'activation "Hey Jarvis" (local)
-edge-tts>=6.1.9           # voix neuronale (gratuite, nécessite internet)
-pyttsx3>=2.90             # voix de secours (Windows, hors ligne)
+edge-tts>=6.1.9           # voix en ligne (repli)
+pyttsx3>=2.90             # voix Windows hors ligne (dernier repli)
 
 # --- GPU NVIDIA (RTX 50xx / Blackwell : CUDA 12.8 minimum) ---
 nvidia-cublas-cu12>=12.8; sys_platform == "win32"

@@ -9,7 +9,7 @@ def test_config_defaults_and_merge():
     assert cfg["llm"]["model"]
     assert "navigateur" in cfg["apps"] and "youtube" in cfg["sites"]
     assert cfg["llm"]["base_url"].startswith("http://localhost")
-    assert cfg["tts"]["engine"] in ("edge", "pyttsx3")
+    assert cfg["tts"]["engine"] in ("piper", "edge", "pyttsx3")
 
 
 def test_normalize_and_yes():
@@ -95,7 +95,7 @@ def test_power_action_requires_confirmation_for_shutdown():
 
 def test_timer_invalid():
     reg = ToolRegistry()
-    timer.register(reg, {}, lambda label: None)
+    timer.register(reg, {}, lambda label, kind='timer': None)
     assert "invalide" in reg.execute("set_timer", {})
     assert "démarré" in reg.execute("set_timer", {"seconds": 30, "label": "test"})
     assert "annulé" in reg.execute("cancel_timers", {})
@@ -109,3 +109,13 @@ def test_registry_coerces_small_model_arguments():
     # "5" -> 5, 12 -> "12", paramètre inventé ignoré
     assert reg.execute("t", {"n": "5", "s": 12, "bidon": True}) == "ok"
     assert seen == {"n": 5, "s": "12"}
+
+
+def test_reminder_tool():
+    reg = ToolRegistry()
+    timer.register(reg, {}, lambda label, kind="timer": None)
+    assert "Il me faut" in reg.execute("set_reminder", {"label": "x"})
+    assert "Heure invalide" in reg.execute("set_reminder", {"label": "x", "at_time": "abc"})
+    assert "programmé" in reg.execute("set_reminder", {"label": "médicament", "in_minutes": 5})
+    assert "programmé à" in reg.execute("set_reminder", {"label": "x", "at_time": "18:30"})
+    reg.execute("cancel_timers", {})
