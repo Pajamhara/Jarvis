@@ -2,9 +2,9 @@
   "name": "astra",
   "productName": "Astra",
   "version": "0.1.0",
-  "description": "Astra — tracker de finances personnelles avec diagramme de Sankey",
+  "description": "Astra",
   "main": "src/main/main.js",
-  "author": "TON_PSEUDO",
+  "author": "Pajamhara",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
@@ -35,7 +35,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "TON_PSEUDO",
+      "owner": "Pajamhara",
       "repo": "astra",
       "releaseType": "release"
     }
