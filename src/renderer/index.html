@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Astra</title>
+  <link rel="stylesheet" href="styles/theme.css" />
+  <link rel="stylesheet" href="styles/app.css" />
+</head>
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="brand"><img src="assets/logo.svg" alt="" /><span>Astra</span></div>
+      <nav id="nav" aria-label="Navigation principale"></nav>
+      <div class="side-bottom">
+        <button class="side-link plain" id="btn-theme"></button>
+        <button class="side-link plain" id="btn-backup">⬇️ Sauvegarder</button>
+        <button class="side-link plain" id="btn-restore">⬆️ Restaurer</button>
+        <button class="version" id="version" title="Rechercher une mise à jour">Astra</button>
+      </div>
+    </aside>
+    <main>
+      <div id="update-banner" class="banner" hidden></div>
+      <div id="view"></div>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast" role="status"></div>
+  <div id="tooltip"></div>
+
+  <script src="../../node_modules/d3/dist/d3.min.js"></script>
+  <script src="../../node_modules/d3-sankey/dist/d3-sankey.min.js"></script>
+  <script src="lib/util.js"></script>
+  <script src="lib/charts.js"></script>
+  <script src="lib/transactionForm.js"></script>
+  <script src="views/sankey.js"></script>
+  <script src="views/transactions.js"></script>
+  <script src="views/monthly.js"></script>
+  <script src="views/yearly.js"></script>
+  <script src="views/topCategories.js"></script>
+  <script src="views/netWorth.js"></script>
+  <script src="views/income.js"></script>
+  <script src="views/stats.js"></script>
+  <script src="views/goals.js"></script>
+  <script src="views/search.js"></script>
+  <script src="views/categories.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
