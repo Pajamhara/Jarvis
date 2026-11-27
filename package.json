@@ -1,7 +1,7 @@
 {
   "name": "astra",
   "productName": "Astra",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Astra — tracker de finances personnelles avec diagramme de Sankey",
   "main": "src/main/main.js",
   "author": "TON_PSEUDO",
