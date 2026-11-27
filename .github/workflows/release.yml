@@ -1,0 +1,39 @@
+name: Release
+
+# Pousse un tag (ex. : git tag v1.0.1 && git push origin v1.0.1)
+# pour construire l'installeur .exe et le publier dans une GitHub Release.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Vérifier que le tag correspond à la version de package.json
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Le tag ($TAG) ne correspond pas à package.json ($PKG)."
+            exit 1
+          fi
+
+      - name: Construire et publier
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
