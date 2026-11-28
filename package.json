@@ -1,8 +1,7 @@
 {
   "name": "astra",
   "productName": "Astra",
-  "version": "0.1.1",
-  "description": "Astra",
+  "version": "1.0.0",
   "main": "src/main/main.js",
   "author": "Pajamhara",
   "license": "MIT",
@@ -24,9 +23,20 @@
   "build": {
     "appId": "com.astra.finance",
     "productName": "Astra",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["src/**/*", "build/icon.png", "package.json"],
-    "win": { "target": "nsis", "icon": "build/icon.png" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "build/icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -35,8 +45,6 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "Pajamhara",
-      "repo": "astra",
       "releaseType": "release"
     }
   }
