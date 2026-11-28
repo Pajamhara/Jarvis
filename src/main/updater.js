@@ -16,6 +16,7 @@ function init(browserWindow) {
 
   autoUpdater.on("update-available", async (info) => {
     manual = false;
+    if (!win.isVisible()) win.show(); // l'appli peut tourner en arrière-plan
     const { response } = await dialog.showMessageBox(win, {
       type: "info",
       title: "Mise à jour disponible",

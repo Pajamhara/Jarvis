@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, nativeTheme } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Menu, Tray, nativeTheme } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
@@ -7,17 +7,28 @@ const db = require("./db");
 const updater = require("./updater");
 
 let win = null;
+let tray = null;
+let quitting = false; // vrai quand l'utilisateur quitte vraiment l'application
+
+const iconFile = () =>
+  path.join(__dirname, "../../build", process.platform === "win32" ? "icon.ico" : "icon.png");
+
+function showWindow() {
+  if (!win || win.isDestroyed()) return createWindow();
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-    }
-  });
+  app.on("second-instance", showWindow);
 }
+
+app.on("before-quit", () => {
+  quitting = true;
+});
 
 /* ---------- API exposée au renderer ---------- */
 
@@ -99,7 +110,7 @@ function createWindow() {
   const cfg = config.get();
   nativeTheme.themeSource = cfg.theme;
 
-  const iconPath = path.join(__dirname, "../../build/icon.png");
+  const iconPath = iconFile();
   win = new BrowserWindow({
     width: cfg.windowWidth,
     height: cfg.windowHeight,
@@ -123,6 +134,21 @@ function createWindow() {
   // Garde la version dans le titre de la fenêtre
   win.on("page-title-updated", (e) => e.preventDefault());
 
+  // Fermer la fenêtre = réduire dans la zone de notification (sauf « Quitter »)
+  win.on("close", (e) => {
+    if (quitting || !config.get().closeToTray) return;
+    e.preventDefault();
+    win.hide();
+    if (tray && !config.get().trayHintShown && process.platform === "win32") {
+      config.save({ trayHintShown: true });
+      tray.displayBalloon({
+        iconType: "info",
+        title: "Astra continue de tourner",
+        content: "Clique sur l'icône de la zone de notification pour rouvrir l'application, ou fais un clic droit pour la quitter.",
+      });
+    }
+  });
+
   // Mémorise la taille de la fenêtre
   let timer = null;
   win.on("resize", () => {
@@ -140,9 +166,41 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  // Vérifie les mises à jour au démarrage
+  // Vérifie les mises à jour au démarrage, puis toutes les 6 heures (l'appli reste ouverte)
   updater.init(win);
   win.webContents.once("did-finish-load", () => setTimeout(() => updater.check(), 2500));
+  if (!updateTimer) updateTimer = setInterval(() => updater.check(), 6 * 60 * 60 * 1000);
+}
+
+let updateTimer = null;
+
+function createTray() {
+  const file = iconFile();
+  if (!fs.existsSync(file)) return;
+  tray = new Tray(file);
+  tray.setToolTip(`Astra v${app.getVersion()}`);
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "Ouvrir Astra", click: showWindow },
+      { label: "Rechercher les mises à jour", click: () => updater.check({ isManual: true }) },
+      { type: "separator" },
+      {
+        label: "Garder Astra en arrière-plan à la fermeture",
+        type: "checkbox",
+        checked: config.get().closeToTray,
+        click: (item) => config.save({ closeToTray: item.checked }),
+      },
+      { type: "separator" },
+      {
+        label: "Quitter Astra",
+        click: () => {
+          quitting = true;
+          app.quit();
+        },
+      },
+    ])
+  );
+  tray.on("click", showWindow);
 }
 
 app.whenReady().then(() => {
@@ -150,12 +208,18 @@ app.whenReady().then(() => {
   db.init(dbFile());
   Menu.setApplicationMenu(null);
   createWindow();
+  createTray();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
 app.on("window-all-closed", () => {
-  db.close();
-  if (process.platform !== "darwin") app.quit();
+  // Avec la réduction en zone de notification, cet événement n'arrive qu'à la vraie fermeture
+  if (quitting || !config.get().closeToTray) {
+    db.close();
+    if (process.platform !== "darwin") app.quit();
+  }
 });
+
+app.on("will-quit", () => db.close());

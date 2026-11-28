@@ -8,6 +8,8 @@ const DEFAULTS = {
   windowWidth: 1280,
   windowHeight: 800,
   initialBalance: 0,
+  closeToTray: true,
+  trayHintShown: false,
 };
 
 let file = null;
@@ -21,6 +23,9 @@ function sanitize(patch) {
     if (Number.isFinite(patch[k]) && patch[k] >= 400) out[k] = Math.round(patch[k]);
   }
   if (Number.isFinite(patch.initialBalance)) out.initialBalance = patch.initialBalance;
+  for (const k of ["closeToTray", "trayHintShown"]) {
+    if (typeof patch[k] === "boolean") out[k] = patch[k];
+  }
   return out;
 }
 

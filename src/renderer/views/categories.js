@@ -24,7 +24,7 @@
             <div class="row" style="align-items:end">
               <label class="field" style="max-width:90px"><span>Emoji</span><input type="text" name="emoji" maxlength="4" value="📦" /></label>
               <label class="field" style="flex:3"><span>Nom</span><input type="text" name="name" maxlength="40" placeholder="Ex. : Santé" /></label>
-              <label class="field" style="flex:none"><span>Couleur</span><input type="color" name="color" value="#7fb2e5" /></label>
+              <label class="field" style="flex:none"><span>Couleur</span><input type="color" name="color" value="#6fa8dc" /></label>
               <label class="field"><span>Budget mensuel</span><input type="number" name="budget" min="0" step="1" placeholder="Facultatif" /></label>
               <label class="field" style="flex:none"><span>&nbsp;</span><button class="btn primary">Ajouter</button></label>
             </div>
