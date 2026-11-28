@@ -2,7 +2,7 @@
 
 Tracker de finances personnelles : saisis tes revenus et tes dépenses, Astra génère un **diagramme de Sankey** de ton mois (`Salaire Net` → catégories de dépenses → `Épargne`). Tout reste **en local** sur ton PC.
 
-Même identité visuelle que Constellation (bleu nuit, bleu clair unique).
+Même famille visuelle que Constellation (fond très sombre teinté, une seule couleur d'accent), déclinée en vert émeraude pour distinguer les applications.
 
 ## Fonctionnalités
 
@@ -68,7 +68,7 @@ Au démarrage, Astra interroge GitHub et compare sa version à la dernière publ
 
 ## Personnaliser les couleurs
 
-Toute la palette est dans `src/renderer/styles/theme.css` (variables CSS, thèmes sombre et clair). Les couleurs des catégories par défaut sont dans `src/main/db.js`.
+Toute la palette est dans `src/renderer/styles/theme.css` (variables CSS, thèmes sombre et clair). Les couleurs des catégories par défaut sont dans `src/main/db.js`. L'épargne est en or (`--savings`) pour la distinguer du vert d'accent.
 
 ## Structure
 
