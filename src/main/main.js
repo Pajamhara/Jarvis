@@ -105,7 +105,7 @@ function createWindow() {
     height: cfg.windowHeight,
     minWidth: 980,
     minHeight: 640,
-    backgroundColor: cfg.theme === "dark" ? "#0f1319" : "#f3f6fa",
+    backgroundColor: cfg.theme === "dark" ? "#0e1512" : "#f1f6f4",
     title: `Astra v${app.getVersion()}`,
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     show: false,
