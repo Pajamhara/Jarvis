@@ -1,40 +1,44 @@
-/* Palette Astra — reprise de Constellation (bleu nuit + bleu clair unique).
+/* Palette Astra — variante « Émeraude » de la famille Constellation.
+   Même structure que Constellation (fond très sombre teinté, une seule couleur
+   claire d'accent) ; seule la teinte change (vert émeraude).
    Pour ajuster les couleurs, modifie uniquement ce fichier. */
 :root,
 :root[data-theme="dark"] {
-  --bg: #0f1319;
-  --sidebar: #131921;
-  --surface: #141a22;
-  --surface-2: #1a222d;
-  --border: #222b36;
-  --text: #e8edf3;
-  --muted: #8895a5;
-  --accent: #7fb2e5;
-  --accent-soft: #1d2a3c;
-  --accent-contrast: #0f1319;
-  --logo-bg: #16212e;
-  --success: #3fb27f;
-  --warning: #d9a441;
+  --bg: #0e1512;
+  --sidebar: #111a16;
+  --surface: #131c18;
+  --surface-2: #19241f;
+  --border: #1f2b25;
+  --text: #e8f0ec;
+  --muted: #86998f;
+  --accent: #6cc9a0;
+  --accent-soft: #1a2b23;
+  --accent-contrast: #0e1512;
+  --logo-bg: #14241d;
+  --savings: #e0b062;
+  --success: #6cc9a0;
+  --warning: #e0b062;
   --danger: #e5736b;
-  --grid: #222b36;
+  --grid: #1f2b25;
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --bg: #f3f6fa;
+  --bg: #f1f6f4;
   --sidebar: #ffffff;
   --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --border: #dde4ec;
-  --text: #17222f;
-  --muted: #5d6b7c;
-  --accent: #3f7fc4;
-  --accent-soft: #e3eefa;
+  --surface-2: #ecf3f0;
+  --border: #d8e4df;
+  --text: #14221c;
+  --muted: #5a6b63;
+  --accent: #2f9e72;
+  --accent-soft: #e0f3ea;
   --accent-contrast: #ffffff;
-  --logo-bg: #16212e;
-  --success: #2c9468;
+  --logo-bg: #14241d;
+  --savings: #b9852b;
+  --success: #2f9e72;
   --warning: #b9852b;
   --danger: #cc4f47;
-  --grid: #e3e9f0;
+  --grid: #e1eae6;
   color-scheme: light;
 }
