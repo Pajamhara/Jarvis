@@ -4,12 +4,12 @@ const Database = require("better-sqlite3");
 let db = null;
 
 const DEFAULT_CATEGORIES = [
-  ["Logement", "🏠", "#7fb2e5"],
+  ["Logement", "🏠", "#6fa8dc"],
   ["Transport", "🚗", "#8b78d0"],
-  ["Loisirs", "🎮", "#d9a441"],
+  ["Loisirs", "🎮", "#e0894f"],
   ["Restaurants", "🍔", "#e5736b"],
-  ["Courses", "🛒", "#4fb98a"],
-  ["Informatique", "💻", "#4f8fd6"],
+  ["Courses", "🛒", "#4fb3c9"],
+  ["Informatique", "💻", "#c27bc4"],
 ];
 
 function init(file) {
@@ -32,7 +32,7 @@ function migrate() {
         id    INTEGER PRIMARY KEY AUTOINCREMENT,
         name  TEXT NOT NULL UNIQUE,
         emoji TEXT NOT NULL DEFAULT '📦',
-        color TEXT NOT NULL DEFAULT '#7fb2e5'
+        color TEXT NOT NULL DEFAULT '#6fa8dc'
       );
       CREATE TABLE transactions (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +60,14 @@ function migrate() {
     for (const c of DEFAULT_CATEGORIES) ins.run(...c);
     db.pragma("user_version = 1");
   }
-  // Futures migrations : if (version < 2) { ... db.pragma("user_version = 2"); }
+  if (version < 2) {
+    // Nouvelle palette Émeraude : met à jour les couleurs des catégories par défaut
+    // (uniquement si l'utilisateur ne les a pas déjà personnalisées)
+    const upd = db.prepare("UPDATE categories SET color = ? WHERE name = ? AND color = ?");
+    const OLD = { Logement: "#7fb2e5", Loisirs: "#d9a441", Courses: "#4fb98a", Informatique: "#4f8fd6" };
+    for (const [name, , color] of DEFAULT_CATEGORIES) if (OLD[name]) upd.run(color, name, OLD[name]);
+    db.pragma("user_version = 2");
+  }
 }
 
 /* ---------- Validation ---------- */
@@ -99,7 +106,7 @@ const api = {
     if (!name) throw new Error("Le nom est obligatoire.");
     const r = db
       .prepare("INSERT INTO categories (name, emoji, color) VALUES (?, ?, ?)")
-      .run(name.slice(0, 40), (emoji || "📦").slice(0, 8), /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#7fb2e5");
+      .run(name.slice(0, 40), (emoji || "📦").slice(0, 8), /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#6fa8dc");
     if (budget > 0) api.setBudget(r.lastInsertRowid, budget);
     return r.lastInsertRowid;
   },
