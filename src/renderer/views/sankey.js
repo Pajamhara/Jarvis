@@ -54,7 +54,7 @@
       return;
     }
 
-    const accent = A.cssVar("--accent"), success = A.cssVar("--success");
+    const accent = A.cssVar("--accent"), success = A.cssVar("--savings");
     const cats = d.categories;
     const nodes = [{ name: "Salaire Net", emoji: "💼", kind: "income", order: 0, color: accent }];
     cats.forEach((c, i) => nodes.push({ name: c.name, emoji: c.emoji, kind: "cat", order: i + 1, color: c.color, cat: c }));
